@@ -6,9 +6,11 @@ public class SquadController : MonoBehaviour
 {
     public LayerMask layermask;
     Camera fpsCamera;
-    int currentMode;
+    public static int currentMode;
+    float squadCooldown = 1.0f;
+    float timer;
 
-    enum AimingMode
+    public enum AimingMode
     {
         Shoot,
         Squad
@@ -26,6 +28,11 @@ public class SquadController : MonoBehaviour
             currentMode = (int)AimingMode.Squad;
         }
 
+        if(Input.GetButton("Cancel"))
+        {
+            currentMode = (int)AimingMode.Shoot;
+        }
+
         Debug.Log(currentMode);
 
         if (currentMode == (int)AimingMode.Squad)
@@ -34,14 +41,26 @@ public class SquadController : MonoBehaviour
         }
     }
 
+    void cooldown()
+    {
+        timer += Time.deltaTime;
+
+        if (timer >= squadCooldown)
+        {
+
+        }
+    }
 
     void SquadSelectionMode()
     {
         RaycastHit hit;
-
+        
         if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, layermask.value))
         {
-            Debug.Log("Hitting layer");
+            if (Input.GetButton("Fire") && )
+            {
+                
+            }
         }
     }
 }

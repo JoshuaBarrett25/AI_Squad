@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Squad
+  - Crosshairs
+  - Enemy
   layers:
   - Default
   - TransparentFX

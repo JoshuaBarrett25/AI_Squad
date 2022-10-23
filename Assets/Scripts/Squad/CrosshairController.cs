@@ -7,8 +7,6 @@ public class CrosshairController : MonoBehaviour
     public GameObject[] crosshairs;
     public GameObject activeCrosshair;
 
-    Quaternion crosshairRotation;
-
     private void Start()
     {
         crosshairs[0].SetActive(true);

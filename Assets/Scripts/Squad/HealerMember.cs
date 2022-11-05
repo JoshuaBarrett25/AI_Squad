@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class LightMember : MonoBehaviour
+public class HealerMember : MonoBehaviour
 {
-    public GameObject playerLocation;
+    GameObject player;
     NavMeshAgent navagent;
-    static public int currentMode;
+    public static int currentMode;
     static public int orderSelected;
+    Transform enemytochase;
+
 
     bool previousFull;
     GameObject previousHitCover;
     GameObject hitCover;
     CoverScript coverscript;
 
-    public Transform pointLocation;
     static public bool pointToGo;
+    public Transform pointLocation;
     public Camera fpsCamera;
     public LayerMask groundLayer;
     public LayerMask defendLayer;
@@ -24,6 +26,14 @@ public class LightMember : MonoBehaviour
     bool cooldownactive;
     float timer;
     float squadCooldown = 1.0f;
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Enemy")
+        {
+            enemytochase = other.transform;
+        }    
+    }
 
     public enum AimingMode
     {
@@ -37,25 +47,39 @@ public class LightMember : MonoBehaviour
         Follow,
         Move,
         Defend,
+        Chasing,
         SQUADMODE
     }
 
 
     private void Start()
     {
+        player = GameObject.FindGameObjectWithTag("Player");
         navagent = gameObject.GetComponent<NavMeshAgent>();
     }
 
 
-    void Update()
+    private void Update()
     {
-        Debug.Log(orderSelected);
+        if (Input.GetButton("Switch"))
+        {
+            currentMode = (int)AimingMode.Squad;
+        }
+
+        if (Input.GetButton("Cancel"))
+        {
+            RadialMenu.isMemberSelected = false;
+            RadialMenu.isActionSelected = false;
+            currentMode = (int)AimingMode.Shoot;
+        }
 
 
-        if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Light)
+        if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Healer)
         {
             orderSelected = RadialMenu.orderselected;
         }
+
+
 
         switch (orderSelected)
         {
@@ -88,14 +112,32 @@ public class LightMember : MonoBehaviour
     void Follow()
     {
         navagent.isStopped = false;
-        //Debug.Log("Light Following");
-        navagent.SetDestination(playerLocation.transform.position);
+        navagent.SetDestination(player.transform.position);
     }
 
     void Stop()
     {
         navagent.isStopped = true;
     }
+
+
+    void Attack()
+    {
+
+    }
+
+
+    void ChaseEnemy()
+    {
+        navagent.SetDestination(enemytochase.position);
+
+        if (navagent.remainingDistance < 1f)
+        {
+            Attack();
+        }
+    }
+
+
 
     void Move()
     {
@@ -121,9 +163,6 @@ public class LightMember : MonoBehaviour
         }
     }
 
-
-
-
     void Point()
     {
         if (Input.GetButton("Fire") && !cooldownactive && !pointToGo)
@@ -131,19 +170,16 @@ public class LightMember : MonoBehaviour
             pointToGo = true;
             cooldownactive = true;
             Debug.Log("SDAJSD");
-        }   
+        }
     }
-
 
     void DefendCast()
     {
         navagent.isStopped = false;
         RaycastHit hit;
 
-
         if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, defendLayer.value))
         {
-
             hitCover = hit.collider.gameObject;
             if (hitCover != previousHitCover && previousFull)
             {
@@ -154,7 +190,7 @@ public class LightMember : MonoBehaviour
             if (Input.GetButton("Fire"))
             {
                 navagent.SetDestination(pointLocation.position);
-                Debug.Log("Light moving to cover");
+                Debug.Log("Healer moving to cover");
                 pointLocation = hit.transform;
                 cooldownactive = true;
             }

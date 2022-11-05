@@ -1,22 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
-public class LightMember : MonoBehaviour
+public class HeavyMember : MonoBehaviour
 {
-    public GameObject playerLocation;
-    NavMeshAgent navagent;
-    static public int currentMode;
+    GameObject player;
+    UnityEngine.AI.NavMeshAgent navagent;
+    public static int currentMode;
     static public int orderSelected;
+
 
     bool previousFull;
     GameObject previousHitCover;
     GameObject hitCover;
     CoverScript coverscript;
 
-    public Transform pointLocation;
     static public bool pointToGo;
+    public Transform pointLocation;
     public Camera fpsCamera;
     public LayerMask groundLayer;
     public LayerMask defendLayer;
@@ -43,22 +43,23 @@ public class LightMember : MonoBehaviour
 
     private void Start()
     {
-        navagent = gameObject.GetComponent<NavMeshAgent>();
+        player = GameObject.FindGameObjectWithTag("Player");
+        navagent = gameObject.GetComponent<UnityEngine.AI.NavMeshAgent>();
     }
 
 
-    void Update()
+    private void Update()
     {
-        Debug.Log(orderSelected);
-
-
-        if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Light)
+        if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Heavy)
         {
             orderSelected = RadialMenu.orderselected;
         }
 
+
+
         switch (orderSelected)
         {
+
             case (int)memberOrders.Stop:
                 Stop();
                 break;
@@ -88,14 +89,15 @@ public class LightMember : MonoBehaviour
     void Follow()
     {
         navagent.isStopped = false;
-        //Debug.Log("Light Following");
-        navagent.SetDestination(playerLocation.transform.position);
+        Debug.Log("Heavy Following");
+        navagent.SetDestination(player.transform.position);
     }
 
     void Stop()
     {
         navagent.isStopped = true;
     }
+
 
     void Move()
     {
@@ -122,8 +124,6 @@ public class LightMember : MonoBehaviour
     }
 
 
-
-
     void Point()
     {
         if (Input.GetButton("Fire") && !cooldownactive && !pointToGo)
@@ -131,19 +131,16 @@ public class LightMember : MonoBehaviour
             pointToGo = true;
             cooldownactive = true;
             Debug.Log("SDAJSD");
-        }   
+        }
     }
-
 
     void DefendCast()
     {
         navagent.isStopped = false;
         RaycastHit hit;
 
-
         if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, defendLayer.value))
         {
-
             hitCover = hit.collider.gameObject;
             if (hitCover != previousHitCover && previousFull)
             {
@@ -154,7 +151,7 @@ public class LightMember : MonoBehaviour
             if (Input.GetButton("Fire"))
             {
                 navagent.SetDestination(pointLocation.position);
-                Debug.Log("Light moving to cover");
+                Debug.Log("Heavy moving to cover");
                 pointLocation = hit.transform;
                 cooldownactive = true;
             }

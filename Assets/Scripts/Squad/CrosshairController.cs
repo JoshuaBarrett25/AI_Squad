@@ -28,12 +28,12 @@ public class CrosshairController : MonoBehaviour
 
     private void Update()
     {
-        if (SquadController.currentMode == (int)SquadController.AimingMode.Shoot)
+        if (PlayerMovement.currentMode == (int)LightMember.AimingMode.Shoot)
         {
             setcrosshair(crosshairs[0]);
         }
 
-        if (SquadController.currentMode == (int)SquadController.AimingMode.Squad)
+        if (PlayerMovement.currentMode == (int)LightMember.AimingMode.Squad)
         {
             setcrosshair(crosshairs[1]);
         }

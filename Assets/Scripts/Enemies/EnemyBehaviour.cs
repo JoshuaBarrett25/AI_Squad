@@ -34,7 +34,7 @@ public class EnemyBehaviour : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         Debug.Log("Entered");
-        if (other.tag == "Squad")
+        if (other.tag == "Squad" || other.tag == "Player")
         {
             Debug.Log("Enemy detected");
             currentMode = (int)EnemyMode.Attacking;

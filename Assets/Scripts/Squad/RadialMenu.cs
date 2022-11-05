@@ -8,7 +8,19 @@ public class RadialMenu : MonoBehaviour
 
     public Vector2 mouseVector;
     public float angle;
-    public int selected;
+    static public int squadselected;
+    static public int orderselected;
+
+
+
+
+    public enum memberSelected
+    {
+        Light,
+        Heavy,
+        Recon,
+        Healer
+    }
 
     static public bool isMemberSelected;
     static public bool isActionSelected;
@@ -23,7 +35,7 @@ public class RadialMenu : MonoBehaviour
 
     void Update()
     {
-        if (SquadController.currentMode == (int)SquadController.AimingMode.Squad)
+        if (PlayerMovement.currentMode == (int)PlayerMovement.AimingMode.Squad)
         {
             Radian();
             if (!isMemberSelected)
@@ -63,7 +75,16 @@ public class RadialMenu : MonoBehaviour
         angle = Mathf.Atan2(mouseVector.y, mouseVector.x)*Mathf.Rad2Deg;
         angle = (angle + 360) % 360;
 
-        selected = (int)(angle / 90);
+
+        if (!isMemberSelected)
+        {
+            squadselected = (int)(angle / 90);
+        }    
+
+        if (isMemberSelected)
+        {
+            orderselected = (int)(angle / 90);
+        }
     }
 
 
@@ -86,11 +107,11 @@ public class RadialMenu : MonoBehaviour
     void MemberSelector()
     {
         MouseCursor(true);
-        if (Input.GetMouseButtonUp(1) && SquadController.currentMode == (int)SquadController.AimingMode.Squad)
+        if (Input.GetMouseButtonUp(1) && PlayerMovement.currentMode == (int)PlayerMovement.AimingMode.Squad)
         {
-            Debug.Log("MemberSelected: " + selected);
-            SquadController.squadmemberselected = selected;
+            //SquadController.squadmemberselected = squadselected;
             isMemberSelected = true;
+            Debug.Log(squadselected);
             MenuToggle(menuObjects, 0, false);
         }
     }
@@ -98,13 +119,13 @@ public class RadialMenu : MonoBehaviour
     void ActionSelector()
     {
         MouseCursor(true);
-        if (Input.GetMouseButtonDown(1) && SquadController.currentMode == (int)SquadController.AimingMode.Squad)
+        if (Input.GetMouseButtonDown(1) && PlayerMovement.currentMode == (int)PlayerMovement.AimingMode.Squad)
         {
-            Debug.Log("ActionSelected: " + selected);
-            SquadController.squadorderSelected = selected;
+            Debug.Log(orderselected);
             isActionSelected = true;
             MenuToggle(menuObjects, 1, false);
             MouseCursor(false);
+            PlayerMovement.currentMode = (int)PlayerMovement.AimingMode.Shoot;
         }
     }
 }

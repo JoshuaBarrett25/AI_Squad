@@ -12,14 +12,12 @@ public class RadialMenu : MonoBehaviour
     static public int orderselected;
 
 
-
-
     public enum memberSelected
     {
         Light,
         Heavy,
-        Recon,
-        Healer
+        Healer,
+        Recon
     }
 
     static public bool isMemberSelected;
@@ -121,7 +119,6 @@ public class RadialMenu : MonoBehaviour
         MouseCursor(true);
         if (Input.GetMouseButtonDown(1) && PlayerMovement.currentMode == (int)PlayerMovement.AimingMode.Squad)
         {
-            Debug.Log(orderselected);
             isActionSelected = true;
             MenuToggle(menuObjects, 1, false);
             MouseCursor(false);

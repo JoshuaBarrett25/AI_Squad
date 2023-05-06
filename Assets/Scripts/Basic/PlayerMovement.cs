@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    GameObject player;
     static public Transform pointLocation;
     public Camera fpsCamera;
     public LayerMask groundLayer;
     public LayerMask defendLayer;
     public CharacterController controller;
     static public int currentMode;
+    SquadBehaviour squadBehaviour;
+
 
     bool cooldownactive;
     float timer;
@@ -27,7 +30,9 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
+        player = GameObject.FindGameObjectWithTag("Player");
         fpsCamera = Camera.main;
+        squadBehaviour = player.GetComponent<SquadBehaviour>();
     }
 
 
@@ -36,7 +41,6 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Input.GetButton("Switch"))
         {
-            //RadialMenu.isMemberSelected = true;
             currentMode = (int)AimingMode.Squad;
         }
 
@@ -44,10 +48,8 @@ public class PlayerMovement : MonoBehaviour
         {
             RadialMenu.isMemberSelected = false;
             RadialMenu.isActionSelected = false;
-            LightMember.pointToGo = false;
-            HealerMember.pointToGo = false;
-            ReconMember.pointToGo = false;
-            HeavyMember.pointToGo = false;
+            squadBehaviour.pointToGo = false;
+            squadBehaviour.moveTo = false;
             currentMode = (int)AimingMode.Shoot;
         }
 

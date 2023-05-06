@@ -5,25 +5,16 @@ using UnityEngine.AI;
 
 public class LightMember : MonoBehaviour
 {
-    public GameObject playerLocation;
+    SquadBehaviour squadBehaviour;
+    GameObject player;
+    GameObject cover;
     NavMeshAgent navagent;
-    static public int currentMode;
+    [SerializeField] Transform formationLocation;
     static public int orderSelected;
 
-    bool previousFull;
-    GameObject previousHitCover;
-    GameObject hitCover;
-    CoverScript coverscript;
-
-    public Transform pointLocation;
-    static public bool pointToGo;
-    public Camera fpsCamera;
-    public LayerMask groundLayer;
-    public LayerMask defendLayer;
-
-    bool cooldownactive;
-    float timer;
-    float squadCooldown = 1.0f;
+    public Camera camera;
+    bool enemyFound;
+    GameObject enemyToAttack;
 
     public enum AimingMode
     {
@@ -35,7 +26,7 @@ public class LightMember : MonoBehaviour
     {
         Stop,
         Follow,
-        Move,
+        Attack,
         Defend,
         SQUADMODE
     }
@@ -43,15 +34,28 @@ public class LightMember : MonoBehaviour
 
     private void Start()
     {
+        player = GameObject.FindGameObjectWithTag("Player");
+        cover = GameObject.FindGameObjectWithTag("Cover");
+        squadBehaviour = player.GetComponent<SquadBehaviour>();
         navagent = gameObject.GetComponent<NavMeshAgent>();
     }
 
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.gameObject.CompareTag("Enemy"))
+        {
+            enemyToAttack = other.gameObject;
+            enemyFound = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        enemyFound = false;
+    }
 
     void Update()
-    {
-        Debug.Log(orderSelected);
-
-
+    { 
         if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Light)
         {
             orderSelected = RadialMenu.orderselected;
@@ -60,112 +64,44 @@ public class LightMember : MonoBehaviour
         switch (orderSelected)
         {
             case (int)memberOrders.Stop:
-                Stop();
+                squadBehaviour.Stop(navagent);
                 break;
 
             case (int)memberOrders.Follow:
-                Follow();
+                squadBehaviour.Follow(navagent, formationLocation);
                 break;
 
-            case (int)memberOrders.Move:
-                Move();
+            case (int)memberOrders.Attack:
+                if (!enemyFound)
+                {
+                    if (!squadBehaviour.moveTo)
+                    {
+
+                        squadBehaviour.Move(navagent, camera);
+                    }
+                    if (squadBehaviour.moveTo)
+                    {
+                        if (Input.GetButtonDown("Cancel"))
+                        {
+                            orderSelected = (int)memberOrders.Stop;
+                        }
+                        squadBehaviour.AimCast(navagent, camera);
+                    }
+                }
+
                 break;
 
             case (int)memberOrders.Defend:
-                if (!pointToGo)
+                if (!squadBehaviour.pointToGo)
                 {
-                    Point();
+                    squadBehaviour.Point();
                 }
-                if (pointToGo)
+
+                if (squadBehaviour.pointToGo)
                 {
-                    DefendCast();
+                    squadBehaviour.DefendCast(navagent, camera, cover.layer);
                 }
                 break;
-        }
-    }
-
-
-    void Follow()
-    {
-        navagent.isStopped = false;
-        //Debug.Log("Light Following");
-        navagent.SetDestination(playerLocation.transform.position);
-    }
-
-    void Stop()
-    {
-        navagent.isStopped = true;
-    }
-
-    void Move()
-    {
-        navagent.isStopped = false;
-        AimCast();
-        navagent.SetDestination(pointLocation.position);
-        //navagent.SetDestination();
-    }
-
-    void AimCast()
-    {
-        navagent.isStopped = false;
-        RaycastHit hit;
-
-        if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, groundLayer.value))
-        {
-            if (Input.GetButton("Fire") && !cooldownactive)
-            {
-                Debug.Log("Hitting ground");
-                pointLocation = hit.transform;
-                cooldownactive = true;
-            }
-        }
-    }
-
-
-
-
-    void Point()
-    {
-        if (Input.GetButton("Fire") && !cooldownactive && !pointToGo)
-        {
-            pointToGo = true;
-            cooldownactive = true;
-            Debug.Log("SDAJSD");
-        }   
-    }
-
-
-    void DefendCast()
-    {
-        navagent.isStopped = false;
-        RaycastHit hit;
-
-
-        if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, defendLayer.value))
-        {
-
-            hitCover = hit.collider.gameObject;
-            if (hitCover != previousHitCover && previousFull)
-            {
-                previousHitCover.GetComponent<CoverScript>().hitmaterial = false;
-            }
-            coverscript = hitCover.GetComponent<CoverScript>();
-            coverscript.hitmaterial = true;
-            if (Input.GetButton("Fire"))
-            {
-                navagent.SetDestination(pointLocation.position);
-                Debug.Log("Light moving to cover");
-                pointLocation = hit.transform;
-                cooldownactive = true;
-            }
-            previousHitCover = hitCover;
-            previousFull = true;
-        }
-
-        else
-        {
-            previousHitCover.GetComponent<CoverScript>().hitmaterial = false;
-            coverscript.hitmaterial = false;
         }
     }
 }

@@ -5,25 +5,17 @@ using UnityEngine.AI;
 
 public class ReconMember : MonoBehaviour
 {
+    SquadBehaviour squadBehaviour;
     GameObject player;
+    GameObject cover;
     NavMeshAgent navagent;
-    public static int currentMode;
+    [SerializeField] Transform formationLocation;
     static public int orderSelected;
+    GameObject enemyToAttack;
 
-    bool previousFull;
-    GameObject previousHitCover;
-    GameObject hitCover;
-    CoverScript coverscript;
+    bool enemyFound;
 
-    static public bool pointToGo;
-    public Transform pointLocation;
-    public Camera fpsCamera;
-    public LayerMask groundLayer;
-    public LayerMask defendLayer;
-
-    bool cooldownactive;
-    float timer;
-    float squadCooldown = 1.0f;
+    public Camera camera;
 
     public enum AimingMode
     {
@@ -35,7 +27,7 @@ public class ReconMember : MonoBehaviour
     {
         Stop,
         Follow,
-        Move,
+        Attack,
         Defend,
         SQUADMODE
     }
@@ -44,23 +36,30 @@ public class ReconMember : MonoBehaviour
     private void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player");
+        cover = GameObject.FindGameObjectWithTag("Cover");
+        squadBehaviour = player.GetComponent<SquadBehaviour>();
         navagent = gameObject.GetComponent<NavMeshAgent>();
     }
 
 
-    private void Update()
+    private void OnTriggerStay(Collider other)
     {
-        if (Input.GetButton("Switch"))
+        if (other.gameObject.CompareTag("Enemy"))
         {
-            currentMode = (int)AimingMode.Squad;
+            enemyToAttack = other.gameObject;
+            enemyFound = true;
         }
+    }
 
-        if (Input.GetButton("Cancel"))
-        {
-            RadialMenu.isMemberSelected = false;
-            RadialMenu.isActionSelected = false;
-            currentMode = (int)AimingMode.Shoot;
-        }
+    private void OnTriggerExit(Collider other)
+    {
+        enemyFound = false;
+    }
+
+
+    void Update()
+    {
+        Debug.Log(orderSelected);
 
 
         if (RadialMenu.squadselected == (int)RadialMenu.memberSelected.Recon)
@@ -68,111 +67,52 @@ public class ReconMember : MonoBehaviour
             orderSelected = RadialMenu.orderselected;
         }
 
-
-
         switch (orderSelected)
         {
             case (int)memberOrders.Stop:
-                Stop();
+                squadBehaviour.Stop(navagent);
                 break;
 
             case (int)memberOrders.Follow:
-                Follow();
+                squadBehaviour.Follow(navagent, formationLocation);
                 break;
 
-            case (int)memberOrders.Move:
-                Move();
+            case (int)memberOrders.Attack:
+                if (!enemyFound)
+                {
+                    if (!squadBehaviour.moveTo)
+                    {
+
+                        squadBehaviour.Move(navagent, camera);
+                    }
+                    if (squadBehaviour.moveTo)
+                    {
+                        if (Input.GetButtonDown("Cancel"))
+                        {
+                            orderSelected = (int)memberOrders.Stop;
+                        }
+                        squadBehaviour.AimCast(navagent, camera);
+                    }
+                }
+
+                if (enemyFound)
+                {
+                    squadBehaviour.Attacking(navagent, enemyToAttack, formationLocation);
+                }
+                
                 break;
 
             case (int)memberOrders.Defend:
-                if (!pointToGo)
+                if (!squadBehaviour.pointToGo)
                 {
-                    Point();
+                    squadBehaviour.Point();
                 }
-                if (pointToGo)
+
+                if (squadBehaviour.pointToGo)
                 {
-                    DefendCast();
+                    squadBehaviour.DefendCast(navagent, camera, cover.layer);
                 }
                 break;
-        }
-    }
-
-
-    void Follow()
-    {
-        navagent.isStopped = false;
-        navagent.SetDestination(player.transform.position);
-    }
-
-    void Stop()
-    {
-        navagent.isStopped = true;
-    }
-
-    void Move()
-    {
-        navagent.isStopped = false;
-        AimCast();
-        navagent.SetDestination(pointLocation.position);
-    }
-
-    void AimCast()
-    {
-        navagent.isStopped = false;
-        RaycastHit hit;
-
-        if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, groundLayer.value))
-        {
-            if (Input.GetButton("Fire") && !cooldownactive)
-            {
-                Debug.Log("Hitting ground");
-                pointLocation = hit.transform;
-                cooldownactive = true;
-            }
-        }
-    }
-
-
-    void Point()
-    {
-        if (Input.GetButton("Fire") && !cooldownactive && !pointToGo)
-        {
-            pointToGo = true;
-            cooldownactive = true;
-            Debug.Log("SDAJSD");
-        }
-    }
-
-
-    void DefendCast()
-    {
-        navagent.isStopped = false;
-        RaycastHit hit;
-
-        if (Physics.Raycast(fpsCamera.transform.position, fpsCamera.transform.TransformDirection(Vector3.forward), out hit, 30, defendLayer.value))
-        {
-            hitCover = hit.collider.gameObject;
-            if (hitCover != previousHitCover && previousFull)
-            {
-                previousHitCover.GetComponent<CoverScript>().hitmaterial = false;
-            }
-            coverscript = hitCover.GetComponent<CoverScript>();
-            coverscript.hitmaterial = true;
-            if (Input.GetButton("Fire"))
-            {
-                navagent.SetDestination(pointLocation.position);
-                Debug.Log("Recon moving to cover");
-                pointLocation = hit.transform;
-                cooldownactive = true;
-            }
-            previousHitCover = hitCover;
-            previousFull = true;
-        }
-
-        else
-        {
-            previousHitCover.GetComponent<CoverScript>().hitmaterial = false;
-            coverscript.hitmaterial = false;
         }
     }
 }
